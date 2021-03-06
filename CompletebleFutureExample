@@ -1,0 +1,111 @@
+		 public List<String> formValidations(YRRuleCreationDto dto) {
+			 List<String> valErrorList= new ArrayList<>();
+		       try {
+
+		           ExecutorService executorService = Executors.newFixedThreadPool(10);
+		           List<CompletableFuture<List<String>>> completableFutures = new ArrayList<>();
+		           
+		           if(dto.getSecondaryMarketRelatedParamCheckBox().equalsIgnoreCase(Constants.YES)) {
+		        	   
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> secondaryMarketTradeValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> secondaryPriorytANdDataIednfierUsageValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> secondarySettlementConventionValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> secondarySelctnFrApplicableDataIednfierValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> secondaryLtpLtyValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> secondaryMarket2WayQouteValidations(dto)));
+			           
+		           }
+		           
+		           if(dto.getPrimaryMarketRelatedParamCheckBox().equalsIgnoreCase(Constants.YES)) {
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> primaryPriorityBasedOnDataidentifierValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> primaryTradeSelectionValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> primaryLtpValidations(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> primaryLtyValidations(dto)));
+			           
+		           }
+		           
+		           if(dto.getRecommendedYield()!=null) {
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> typeOfYieldInRecomendedYield(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> yCInRecomendedYield(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> isinRatingPopulatedInRecomendedYield(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> checkValidationsForRecomendedYieldSpreadComputatnSteps(dto)));  
+		           }else {
+		        	   valErrorList.add("Valuationtype is mandatory in Recommended Yield");
+		           }
+		          
+		           if(dto.getSimilarSecSelection()!=null) {
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> checkValidationsForBasedOnComputationInSimilarSecurities(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> similarSecurityCriteriaYield(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> similarSecurityMovementOfSimilarSec(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> similarSecurityRulesTenor(dto)));
+			           
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> checkForSimSecUnratedSecurityValidations(dto)));  
+		           }else {
+		        	   valErrorList.add("Priority is mandatory in Criteria to be checked for same yield/spread in similar security definition");
+		        	   valErrorList.add("Priority is mandatory in movement of other similarities in similar security definition");
+		        	   valErrorList.add("security class,special category,computationmethod,taxstatus,liquidity are mandatory in based on computation method at similar security definition");
+		           }
+		           
+		           
+		           
+		           
+		           if(dto.getOtherRules()!=null) {
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> others(dto)));
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> othersAPplicationOfSameIsin(dto)));
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> othersSpreadOverBenchMark(dto)));
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> othersAssumptionsFrTrades(dto)));
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> othersSpreadOverYieldCuretType(dto)));
+			           completableFutures.add(CompletableFuture.supplyAsync(() -> othersYieldPopulatingTenor(dto)));
+		           }else {
+		        	   valErrorList.add("Valuationtenorunit , defaultliquiditystatus and IndustryClassification are mandatory in others");
+		           }
+		          
+		           
+		           
+			if (dto.getQualityCheck() != null)
+				completableFutures.add(CompletableFuture.supplyAsync(() -> checkValidationsForQC(dto)));
+			else
+				valErrorList.add("YTM Round Off,Price Round Off is mandatory in QualityCheck");
+
+			
+			if (dto.getViewValuations() != null)
+				completableFutures.add(CompletableFuture.supplyAsync(() -> checkValidationsForViewValuations(dto)));
+		       
+		           if(dto.getTransactionRules()!=null) {
+		        	   completableFutures.add(CompletableFuture.supplyAsync(() -> transactionOutlier(dto)));
+		           }
+		           
+		           CompletableFuture<Void> allOff = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).
+		           		whenComplete((v, th) -> completableFutures.forEach(cf ->{
+								try {
+									cf.get().stream().forEach(t->valErrorList.add(t));
+								} catch (InterruptedException e) {
+									log.error("",e);
+									Thread.currentThread().interrupt();
+								} catch (ExecutionException e) {
+									log.error("",e);
+								}
+							}));
+		           allOff.join();
+		           executorService.shutdown();
+
+		           return valErrorList;
+		       }catch(Exception e){
+		        log.error("",e);
+		       }
+		       return valErrorList;
+		   }
