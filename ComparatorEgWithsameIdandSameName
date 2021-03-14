@@ -1,0 +1,96 @@
+package com.crisil.valuation.service.impl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import com.crisil.valuation.service.dto.Employee;
+
+class Test {
+
+	
+
+	public static void main(String[] args) {
+		Employee e1=new Employee(1,"raj","perla");
+		Employee e2=new Employee(1,"tej","perla");
+		Employee e3=new Employee(1,"raj","batchu");
+		List<Employee> l1=new ArrayList<>();
+		l1.add(e1);
+		l1.add(e2);
+		l1.add(e3);
+		
+		//l1.sort(Comparator.comparing(Employee::getSalary).thenComparing(Employee::getName));
+
+		Collections.sort(l1,new EmployeeIdComparator());
+		System.out.println(l1);
+		
+	}
+}
+
+
+
+package com.crisil.valuation.service.dto;
+
+import java.util.Comparator;
+
+public class Employee{
+
+	private Integer employeeId;
+	private String employeeName;
+	private String firstName;
+	public Integer getEmployeeId() {
+		return employeeId;
+	}
+	public void setEmployeeId(Integer employeeId) {
+		this.employeeId = employeeId;
+	}
+	public String getEmployeeName() {
+		return employeeName;
+	}
+	public void setEmployeeName(String employeeName) {
+		this.employeeName = employeeName;
+	}
+	public String getFirstName() {
+		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	
+	public Employee(Integer employeeId, String employeeName, String firstName) {
+		super();
+		this.employeeId = employeeId;
+		this.employeeName = employeeName;
+		this.firstName = firstName;
+	}
+	
+	@Override
+	public String toString() {
+		return "Employee [employeeId=" + employeeId + ", employeeName=" + employeeName + ", firstName=" + firstName
+				+ "]";
+	}
+	
+	
+}
+
+
+
+
+package com.crisil.valuation.service.impl;
+
+import java.util.Comparator;
+
+import com.crisil.valuation.service.dto.Employee;
+
+public class EmployeeIdComparator implements Comparator<Employee>{
+
+	@Override
+	public int compare(Employee o1, Employee o2) {
+		int i=Integer.compare(o1.getEmployeeId(),o2.getEmployeeId());
+		if(i==0)
+			return o1.getEmployeeName().compareTo(o2.getEmployeeName());
+		return i;
+	}
+
+}
